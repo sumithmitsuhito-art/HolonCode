@@ -8,8 +8,6 @@ from atri import DATA_DIR
 from atri.prompt_manager import PromptManager
 from atri.file_tool import FileTool
 
-_MIRROR = "https://pypi.tuna.tsinghua.edu.cn/simple"
-
 
 def _header(text: str) -> None:
     print(f"\n{'='*50}")
@@ -25,22 +23,23 @@ def _fail(text: str) -> None:
     print(f"  [FAIL] {text}")
 
 
-def _pip_install(pkg: str) -> bool:
-    """Run pip install and return True on success."""
+def _uv_install(pkg: str) -> bool:
+    """使用 uv 安装包并验证导入，成功返回 True。"""
     print(f"  正在安装 {pkg} ...")
     try:
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", pkg, "-i", _MIRROR],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-    except subprocess.CalledProcessError:
+        subprocess.check_call(["uv", "pip", "install", pkg])
+    except FileNotFoundError:
+        print("         [FAIL] uv 命令未找到，请确认 uv 已安装并在 PATH 中。")
         return False
-    # Verify import
+    except subprocess.CalledProcessError as e:
+        print(f"         [FAIL] uv 安装失败 (退出码 {e.returncode})")
+        print(f"         提示：手动执行 uv pip install {pkg} 查看详细错误。")
+        return False
     try:
         __import__(pkg)
         return True
     except ImportError:
+        print(f"         [FAIL] 包安装完成但无法导入，可能是版本或平台兼容性问题。")
         return False
 
 
@@ -65,10 +64,10 @@ def check_environment() -> bool:
         except ImportError:
             _fail(f"依赖包 {name} 未安装")
             print(f"         正在自动安装 {pkg} ...")
-            if _pip_install(pkg):
+            if _uv_install(pkg):
                 _ok(f"依赖包 {name} 安装成功")
             else:
-                _fail(f"依赖包 {name} 安装失败，请手动执行 pip install {pkg}")
+                _fail(f"依赖包 {name} 安装失败，请手动执行 uv pip install {pkg}")
                 all_ok = False
 
     # Optional: aiotieba for tieba browsing
@@ -79,12 +78,12 @@ def check_environment() -> bool:
         print("  [INFO] 可选依赖 aiotieba 未安装，贴吧浏览工具当前不可用。")
         answer = input("         是否现在安装？(Y/n) ").strip().lower()
         if answer in ("", "y", "yes"):
-            if _pip_install("aiotieba"):
+            if _uv_install("aiotieba"):
                 _ok("aiotieba 安装成功，贴吧工具已就绪")
             else:
-                print("  [WARN] aiotieba 安装失败，可稍后手动执行 pip install aiotieba")
+                print("  [WARN] aiotieba 安装失败，可稍后手动执行 uv pip install aiotieba")
         else:
-            print("         已跳过。如需贴吧功能，稍后运行 pip install aiotieba 即可。")
+            print("         已跳过。如需贴吧功能，稍后运行 uv pip install aiotieba 即可。")
 
     return all_ok
 

@@ -126,3 +126,8 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+def cli():
+    """控制台脚本入口（供 uv run atri / atri 命令调用）。"""
+    asyncio.run(main())
