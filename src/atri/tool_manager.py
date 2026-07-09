@@ -1,13 +1,10 @@
 import json
-import re
-from html import unescape
-from urllib.parse import quote_plus
-import httpx
 from atri.models import Tool, FunctionDef
 from atri.file_tool import FileTool
 from atri.memory_tool import MemoryTool
 from atri.skill_loader import SkillLoader, SKILLS_DIR
 from atri.tieba_tool import TiebaTool
+from atri.web_tools import web_search_tool, web_extract_tool
 
 
 def _make_tool(name: str, description: str, parameters: dict) -> Tool:
@@ -202,15 +199,44 @@ class ToolManager:
                 "required": ["name", "content"],
             }),
         _make_tool("web_search",
-            "在互联网上搜索指定关键词，返回前5条结果的标题、URL和摘要。"
-            "当用户问'查一下xxx'、'搜索xxx'、'网上有没有xxx'、'最新的xxx是什么'时调用此工具。"
-            "搜索结果来自多个搜索引擎的聚合，支持中文和英文查询。",
+            "Search the web for information. Returns up to 5 results by default with titles, URLs, and descriptions. "
+            "The query is passed through to the configured backend, so operators such as site:domain, filetype:pdf, "
+            "intitle:word, -term, and \"exact phrase\" may work when the backend supports them.",
             {
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "description": "搜索关键词，支持中文和英文"},
+                    "query": {
+                        "type": "string",
+                        "description": "The search query to look up on the web. You may include backend-supported "
+                                       "operators such as site:example.com, filetype:pdf, intitle:word, -term, "
+                                       "or \"exact phrase\"."
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of results to return. Defaults to 5.",
+                        "minimum": 1,
+                        "maximum": 100,
+                        "default": 5,
+                    },
                 },
                 "required": ["query"],
+            }),
+        _make_tool("web_extract",
+            "Extract content from web page URLs. Returns page content in markdown format. "
+            "Also works with PDF URLs (arxiv papers, documents, etc.) — pass the PDF link directly "
+            "and it converts to markdown text. If a URL fails or times out, use the browser tool "
+            "to access it instead.",
+            {
+                "type": "object",
+                "properties": {
+                    "urls": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of URLs to extract content from (max 5 URLs per call)",
+                        "maxItems": 5,
+                    },
+                },
+                "required": ["urls"],
             }),
         # ── 百度贴吧浏览工具 ──
         _make_tool("tieba_get_threads",
@@ -405,7 +431,14 @@ class ToolManager:
             return f"写入技能 '{skill_name}' 失败。"
 
         if name == "web_search":
-            return self._web_search(str(args.get("query", "")))
+            return web_search_tool(str(args.get("query", "")), int(args.get("limit", 5) or 5))
+        if name == "web_extract":
+            urls = args.get("urls", [])
+            if isinstance(urls, list):
+                urls = urls[:5]
+            else:
+                urls = []
+            return web_extract_tool(urls)
 
         # ── 百度贴吧浏览工具 ──
         if name == "tieba_get_threads":
@@ -425,67 +458,3 @@ class ToolManager:
 
         return "未知工具调用"
 
-    @staticmethod
-    def _web_search(query: str, limit: int = 5) -> str:
-        if not query.strip():
-            return "搜索关键词不能为空。"
-        try:
-            resp = httpx.get(
-                "https://www.bing.com/search",
-                params={"q": query},
-                timeout=10,
-                follow_redirects=True,
-                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
-            )
-            resp.raise_for_status()
-        except httpx.HTTPError as e:
-            return f"搜索请求失败：{e}"
-
-        html = resp.text
-        # Extract result blocks from Bing's HTML
-        for pattern in [
-            r'<li class=\"b_algo\">(.*?)</li>',
-            r'<li class=\"b_algo\"[^>]*>(.*?)</li>',
-        ]:
-            blocks = re.findall(pattern, html, re.DOTALL)
-            if blocks:
-                break
-
-        if not blocks:
-            return f"未找到与 '{query}' 相关的网页结果。"
-
-        lines = [f"搜索 '{query}' 的结果（共 {min(len(blocks), limit)} 条）\n---"]
-        for i, block in enumerate(blocks[:limit]):
-            # Title
-            title = ""
-            for tp in [r'<h2[^>]*><a[^>]*>(.*?)</a>', r'<a[^>]*>(.*?)</a>']:
-                t_m = re.search(tp, block, re.DOTALL)
-                if t_m:
-                    title = re.sub(r'<[^>]+>', '', t_m.group(1)).strip()
-                    break
-            title = unescape(title) or "无标题"
-
-            # URL (skip Bing redirect URLs)
-            urls = re.findall(r'href=\"(https?://[^\"]+)\"', block)
-            url = ""
-            for u in urls:
-                if "r.bing.com" not in u and "go.microsoft.com" not in u:
-                    url = u
-                    break
-            if not url and urls:
-                url = urls[0]
-
-            # Snippet
-            snippet = ""
-            for sp in [r'<p[^>]*>(.*?)</p>']:
-                s_m = re.search(sp, block, re.DOTALL)
-                if s_m:
-                    snippet = re.sub(r'<[^>]+>', '', s_m.group(1)).strip()
-                    break
-            snippet = unescape(snippet)
-
-            lines.append(f"{i+1}. {title}")
-            lines.append(f"   URL: {url}")
-            lines.append(f"   {snippet}\n")
-
-        return "\n".join(lines)

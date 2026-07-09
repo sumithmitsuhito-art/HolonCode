@@ -28,7 +28,7 @@ def test_initialization_loads_config(tmp_path, monkeypatch):
     assert svc.api_key == "sk-test"
     assert svc.url == "https://test.api.com"
     assert svc.model == "test-model"
-    assert len(svc.tool.tool_list) == 21
+    assert len(svc.tool.tool_list) == 28
     assert svc.content_compact is not None
     # System prompt is now built dynamically — verify it contains ATRI's identity
     built = svc.prompt_manager.build_system_prompt()

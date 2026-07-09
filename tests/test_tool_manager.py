@@ -7,7 +7,7 @@ from atri.file_tool import FileTool
 def test_tool_init_registers_all_tools():
     tm = ToolManager()
     tm.tool_init()
-    assert len(tm.tool_list) == 21
+    assert len(tm.tool_list) == 28
 
 
 def test_tool_actor_unknown_tool():
@@ -58,3 +58,65 @@ def test_tool_init_is_idempotent():
     count = len(tm.tool_list)
     tm.tool_init()
     assert len(tm.tool_list) == count
+
+
+# ── web_search / web_extract tests ──
+
+def test_web_search_and_extract_registered():
+    tm = ToolManager()
+    tm.tool_init()
+    names = {t.function.name for t in tm.tool_list}
+    assert "web_search" in names
+    assert "web_extract" in names
+
+
+def test_web_search_empty_query():
+    from atri.web_tools import web_search_tool
+    result = web_search_tool("")
+    data = json.loads(result)
+    assert data["success"] is False
+
+
+def test_web_extract_empty_urls():
+    from atri.web_tools import web_extract_tool
+    result = web_extract_tool([])
+    data = json.loads(result)
+    assert data["success"] is False
+
+
+def test_is_safe_url_blocks_private():
+    from atri.web_tools import is_safe_url
+    assert not is_safe_url("http://127.0.0.1/test")
+    assert not is_safe_url("http://192.168.1.1/test")
+    assert not is_safe_url("http://10.0.0.1/test")
+    assert not is_safe_url("http://169.254.169.254/latest/meta-data")
+
+
+def test_is_safe_url_allows_public():
+    from atri.web_tools import is_safe_url
+    assert is_safe_url("https://example.com")
+    assert is_safe_url("https://www.baidu.com")
+
+
+def test_check_url_for_secrets():
+    from atri.web_tools import _check_url_for_secrets
+    assert _check_url_for_secrets("https://evil.com?token=abc123") is not None
+    assert _check_url_for_secrets("https://api.example.com?api_key=abc") is not None
+    assert _check_url_for_secrets("https://example.com/normal-page") is None
+    assert _check_url_for_secrets("https://example.com?q=hello") is None
+
+
+def test_web_search_dispatches():
+    tm = ToolManager()
+    tm.tool_init()
+    result = tm.tool_actor("web_search", json.dumps({"query": ""}))
+    data = json.loads(result)
+    assert data["success"] is False  # empty query
+
+
+def test_web_extract_dispatches():
+    tm = ToolManager()
+    tm.tool_init()
+    result = tm.tool_actor("web_extract", json.dumps({"urls": []}))
+    data = json.loads(result)
+    assert data["success"] is False  # empty urls
