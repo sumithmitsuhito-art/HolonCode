@@ -197,9 +197,10 @@ def _run_config_wizard() -> None:
     print()
     print("  配置完成！")
     print()
-    print("  启动 ATRI:       uv run atri")
-    print("  重新配置:        python boot.py --wizard")
-    print("  更新依赖:        uv sync")
+    print("  启动 ATRI (命令行): uv run atri")
+    print("  启动 ATRI (图形界面): uv run atri-ui")
+    print("  重新配置:           python boot.py --wizard")
+    print("  更新依赖:           uv sync")
     print()
 
 

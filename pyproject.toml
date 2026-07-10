@@ -12,6 +12,7 @@ description = "ATRI - 亚托莉, a role-playing AI chatbot powered by DeepSeek"
 requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.27.0",
+    "pyside6>=6.5.0",
     "rich>=13.0.0",
 ]
 
@@ -20,6 +21,7 @@ where = ["src"]
 
 [project.scripts]
 atri = "atri.main:cli"
+atri-ui = "atri.ui.main_window:main"
 atri-setup = "atri.setup:main"
 
 [project.optional-dependencies]

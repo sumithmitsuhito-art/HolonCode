@@ -55,7 +55,7 @@ def check_environment() -> bool:
         _fail(f"Python {v.major}.{v.minor}.{v.micro} (需要 3.12+)")
 
     # Core dependencies
-    deps = {"httpx": "httpx", "rich": "rich"}
+    deps = {"httpx": "httpx", "pyside6": "PySide6", "rich": "rich"}
     all_ok = py_ok
     for name, pkg in deps.items():
         try:
@@ -230,7 +230,7 @@ def print_summary() -> None:
     _header("配置完成")
     print(f"  数据目录: {DATA_DIR}")
     print(f"  工作目录: {FileTool.work_dir}")
-    print(f"  启动命令: atri")
+    print(f"  启动命令: atri (命令行), atri-ui (图形界面)")
     print()
 
 
