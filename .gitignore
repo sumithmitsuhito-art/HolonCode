@@ -18,6 +18,10 @@ Thumbs.db
 data/UserSettings.json
 data/ConversationHistory.json
 data/MemoryForUser.json
+data/sessions/
+
+# AI file sandbox
+workspace/
 
 # Test caches
 .pytest_cache/
