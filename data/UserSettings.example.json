@@ -1,0 +1,18 @@
+{
+    "DeepSeek": {
+        "ApiKey": "sk-your-api-key-here",
+        "Url": "https://api.deepseek.com/chat/completions",
+        "Model": "deepseek-v4-pro"
+    },
+    "QQBot": {
+        "AppId": "",
+        "ClientSecret": ""
+    },
+    "Tieba": {
+        "BDUSS": "",
+        "STOKEN": ""
+    },
+    "UI": {
+        "ChatFontSize": 14
+    }
+}
