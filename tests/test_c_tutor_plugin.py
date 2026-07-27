@@ -29,7 +29,7 @@ def test_load_progress_returns_default_when_no_file():
     plugin = _load_plugin()
     result = plugin.load_progress()
     assert result["total_score"] == 0
-    assert result["total_levels"] == 10
+    assert result["total_levels"] == 29
     assert result["completed_levels"] == 0
     assert result["levels"] == {}
 

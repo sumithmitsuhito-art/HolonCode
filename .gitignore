@@ -15,7 +15,7 @@ build/
 Thumbs.db
 
 # Project runtime data (contains secrets or personal data)
-data/UserSettings.json
+data/UserSettings*.json
 data/ConversationHistory.json
 data/MemoryForUser.json
 data/sessions/

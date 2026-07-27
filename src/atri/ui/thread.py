@@ -215,6 +215,7 @@ class Thread(QFrame):
         # type ∈ {'user', 'ai', 'ai-progress', 'system', 'skill'}
         self._messages: list[tuple[str, str]] = []
         self._user_scrolled_up = False
+        self._web_sourced = False
 
         # When non-None, the next streaming update reuses the document from
         # this position to the end — avoiding a full setHtml() teardown.
@@ -224,6 +225,7 @@ class Thread(QFrame):
 
     def add_user_message(self, text: str):
         self._set_escaped(False)
+        self._web_sourced = False
         self._messages.append(("user", text))
         self._streaming_pos = None  # force full rebuild
         self._full_render()
@@ -242,6 +244,12 @@ class Thread(QFrame):
         self._messages.append(("skill", text))
         self._streaming_pos = None
         self._full_render()
+
+    def mark_web_sourced(self):
+        self._web_sourced = True
+        if self._messages and self._messages[-1][0] == "ai-progress":
+            self._streaming_pos = None
+            self._full_render()
 
     def add_ai_message_in_progress(self, partial_text: str):
         if self._messages and self._messages[-1][0] == "ai-progress":
@@ -269,6 +277,7 @@ class Thread(QFrame):
         self._messages.clear()
         self._browser.clear()
         self._streaming_pos = None
+        self._web_sourced = False
         self._set_escaped(False)
 
     def load_history(self, messages: list[tuple[str, str]]):
@@ -309,8 +318,7 @@ class Thread(QFrame):
 
     # ── rendering ─────────────────────────────────────────────────────
 
-    @staticmethod
-    def _render_bubble_html(msg_type: str, text: str) -> str:
+    def _render_bubble_html(self, msg_type: str, text: str) -> str:
         if msg_type == "user":
             return _USER_BUBBLE.format(
                 bg=BUBBLE_USER,
@@ -321,13 +329,23 @@ class Thread(QFrame):
                 content=escape(text),
             )
         elif msg_type in ("ai", "ai-progress"):
+            content_html = _md_to_html(text)
+            if self._web_sourced:
+                content_html = (
+                    '<div style="margin-bottom:8px;">'
+                    '<span style="display:inline-block;background:#E3F2FD;color:#1565C0;'
+                    'font-size:11px;font-weight:500;padding:3px 10px;border-radius:10px;'
+                    'border:1px solid #BBDEFB;">'
+                    "\U0001f310 回答来自网络搜索"
+                    '</span></div>'
+                ) + content_html
             return _AI_BUBBLE.format(
                 bg=BUBBLE_AI,
                 fg=TEXT_PRIMARY,
                 font=FONT_SANS,
                 chat_size=_theme.CHAT_FONT_SIZE,
                 icon=_get_icon_data_uri(),
-                content=_md_to_html(text),
+                content=content_html,
             )
         elif msg_type == "skill":
             return _SKILL_MSG.format(

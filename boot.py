@@ -204,6 +204,7 @@ def _run_config_wizard() -> None:
     print("  启动 ATRI (图形界面): uv run atri-ui")
     print("  重新配置:           python boot.py --wizard")
     print("  更新依赖:           uv sync")
+    print("  正在准备启动，请稍后...")
     print()
 
 

@@ -20,4 +20,5 @@ where uv >nul 2>&1 || (
 )
 
 uv run python boot.py
+uv run atri-ui
 pause

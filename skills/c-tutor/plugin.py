@@ -28,7 +28,7 @@ except NameError:
 def _default_progress() -> dict:
     return {
         "total_score": 0,
-        "total_levels": 19,
+        "total_levels": 29,
         "completed_levels": 0,
         "levels": {},
     }

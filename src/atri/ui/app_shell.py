@@ -359,6 +359,8 @@ class AppShell(QMainWindow):
     def _on_tool_start(self, tool_name: str):
         self.status_bar.set_status(f"调用工具: {tool_name}", busy=True)
         self.chat_view.thread.add_system_message(f"🔧 调用工具: {tool_name}")
+        if tool_name in ("web_search", "web_extract"):
+            self.chat_view.thread.mark_web_sourced()
 
     def _on_tool_result(self, tool_name: str, result: str):
         self.status_bar.set_status("思考中...", busy=True)
