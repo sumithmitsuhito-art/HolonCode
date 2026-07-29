@@ -334,10 +334,18 @@ class ToolManager:
         FileTool.ensure_work_dir()
 
     def get_all_tools(self, active_skills: list[str] | None = None) -> list[Tool]:
-        """Return full tool list: built-in tools + tools from all active skills."""
-        tools = list(self._base_tools)
+        """Return full tool list: built-in tools + tools from all active skills.
+        Deduplicates by function name — multiple skills may register the same tool."""
+        seen: set[str] = set()
+        tools: list[Tool] = []
+        for t in self._base_tools:
+            seen.add(t.function.name)
+            tools.append(t)
         for name in (active_skills or []):
-            tools.extend(self._skill_tools.get(name, []))
+            for t in self._skill_tools.get(name, []):
+                if t.function.name not in seen:
+                    seen.add(t.function.name)
+                    tools.append(t)
         return tools
 
     def tool_actor(self, name: str | None, arguments: str, active_skills: list[str] | None = None) -> str | None:
