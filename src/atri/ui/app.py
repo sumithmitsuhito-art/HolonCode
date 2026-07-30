@@ -12,6 +12,7 @@ from atri.ui.theme import global_stylesheet
 def main():
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QApplication(sys.argv)
+    app.setStyle("Fusion")
     app.setWindowIcon(QIcon(str(RESOURCE_DIR / "icon" / "头像.png")))
     app.setStyleSheet(global_stylesheet())
     window = AppShell()
