@@ -70,8 +70,8 @@ PADDING_MD = 12
 PADDING_SM = 8
 
 # ── typography (matching Hermes font stack) ───────────────────────────
-FONT_SANS = '"Segoe UI", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif'
-FONT_MONO = '"Cascadia Code", "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace'
+FONT_SANS = '"Segoe UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif'
+FONT_MONO = '"Cascadia Code", "JetBrains Mono", "Fira Code", "SF Mono", ui-monospace, Consolas, "Courier New", monospace'
 FONT_SIZE = 14
 FONT_SIZE_SMALL = 11
 
